@@ -8,6 +8,7 @@
 #include "AssetToolsModule.h"
 #include "EditorUtilityLibrary.h"
 #include "EditorAssetLibrary.h"
+#include "NotifyTools.h"
 #include "Factories/MaterialFactoryNew.h"
 #include "Factories/MaterialInstanceConstantFactoryNew.h"
 #include "Materials/MaterialExpressionTextureSample.h"
@@ -20,7 +21,7 @@ void UCreateMaterialByTex::CreateMaterialFromSelectedTex()
 	{
 		if (MaterialName == this->StaticClass()->GetDefaultObject<UCreateMaterialByTex>()->MaterialName)
 		{
-			GEngine->AddOnScreenDebugMessage(0, 10.0f, FColor::Red,TEXT("Please Check Material!"));
+			UNotifyTools::ShowMsgDialog(EAppMsgType::Ok,TEXT("Please Set Custom Name"));
 			return;
 		}
 	}
@@ -39,7 +40,7 @@ void UCreateMaterialByTex::CreateMaterialFromSelectedTex()
 	UMaterial* NewMaterial = CreateMaterial(MaterialName, OutTexturePath);
 	if (!NewMaterial)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red,TEXT("Fail To Create Material"));
+		UNotifyTools::ShowMsgDialog(EAppMsgType::Ok,TEXT("Fail To Create Material"));
 		return;
 	}
 	//把纹理连接到材质节点上
@@ -50,14 +51,12 @@ void UCreateMaterialByTex::CreateMaterialFromSelectedTex()
 	}
 	if (PinCount > 0)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red,
-		                                 FString::Printf(TEXT("Successfully Connected %d Pins"), PinCount));
+		UNotifyTools::ShowCornerPopupMessage(FString::Printf(TEXT("Connect %d Node Pin"), PinCount));
 	}
 	if (bCreateMaterialInstance)
 	{
-		CreateMaterialInstanceFromMaterial(NewMaterial,OutTexturePath);
+		CreateMaterialInstanceFromMaterial(NewMaterial, OutTexturePath);
 	}
-	GEngine->AddOnScreenDebugMessage(0, 10.0f, FColor::Green, OutTexturePath);
 }
 
 void UCreateMaterialByTex::RemoveResSuffix()
@@ -99,12 +98,11 @@ bool UCreateMaterialByTex::ProcessSelectedData(const TArray<FAssetData>& Selecte
 		UTexture2D* Texture = Cast<UTexture2D>(AssetObject);
 		if (nullptr == Texture)
 		{
-			GEngine->AddOnScreenDebugMessage(2, 10.0f, FColor::Red, FString::Printf(
-				                                 TEXT("Selected Asset %s Is Not A Texture"),
-				                                 *AssetData.AssetName.ToString()));
+			UNotifyTools::ShowCornerPopupMessage(FString::Printf(TEXT("Selected Asset %s Is Not A Texture"),
+			                                                     *AssetData.AssetName.ToString()));
 			continue;
 		}
-		OutTextureArray.Push(Texture);
+		OutTextureArray.Emplace(Texture);
 		if (OutTexturePath.IsEmpty())
 		{
 			OutTexturePath = AssetData.PackagePath.ToString();
@@ -129,8 +127,7 @@ bool UCreateMaterialByTex::CheckNameIsUsed(const FString& FolderPath, const FStr
 		FString AssetName = FPaths::GetBaseFilename(AssetPath);
 		if (AssetName == CheckedName)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red,
-			                                 FString::Printf(TEXT("Name %s Was Used"), *AssetName));
+			UNotifyTools::ShowMsgDialog(EAppMsgType::Ok, FString::Printf(TEXT("Name %s Was Used"), *AssetName));
 			return true;
 		}
 	}
@@ -344,13 +341,13 @@ void UCreateMaterialByTex::CreateMaterialInstanceFromMaterial(UMaterial* TargetM
 	UMaterialInstanceConstant* NewMaterialInstance = Cast<UMaterialInstanceConstant>(NewAsset);
 	if (!NewMaterialInstance)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red,TEXT("Fail To Create Material Instance"));
+		UNotifyTools::ShowMsgDialog(EAppMsgType::Ok,TEXT("Fail To Create Material Instance"));
 		return;
 	}
 	NewMaterialInstance->SetParentEditorOnly(TargetMaterial);
 	NewMaterialInstance->PostEditChange();
 	TargetMaterial->PostEditChange();
-	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue,TEXT("Create Material Instance Success"));
+	UNotifyTools::ShowCornerPopupMessage(TEXT("Create Material Instance Success"));
 }
 
 void UCreateMaterialByTex::SetSelectedTextureAssetSettings(UTexture2D* SelectedTexture, ETextureType TextureType)

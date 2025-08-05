@@ -40,14 +40,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CreateMaterialFromSelectedTex();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CreateMaterialFromTex")
-	FString MaterialName = "M_";
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CreateMaterialFromTex")
 	bool bUseCustomName = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CreateMaterialFromTex",meta=(EditCondition=bUseCustomName))
+	FString MaterialName = "M_";
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CreateMaterialFromTex")
 	bool bUsePackagedORM=false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CreateMaterialFromTex")
 	bool bCreateMaterialInstance=false;
+
+	//@TODO:需要能指定父材质
+	
 #pragma region TextureSuffix
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureSuffix")
 	TArray<FString> BaseColorArray = {
