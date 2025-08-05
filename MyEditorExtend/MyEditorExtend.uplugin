@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "MyEditorExtend",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "jia",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "MyEditorExtend",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
