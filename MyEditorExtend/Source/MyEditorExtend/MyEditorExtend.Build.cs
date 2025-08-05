@@ -38,6 +38,11 @@ public class MyEditorExtend : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"UMG",
+				"Blutility",
+				"EditorScriptingUtilities", 
+				"AssetTools",
+				"UnrealEd"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
