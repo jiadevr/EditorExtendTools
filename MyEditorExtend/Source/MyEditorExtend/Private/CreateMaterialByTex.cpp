@@ -9,7 +9,9 @@
 #include "EditorUtilityLibrary.h"
 #include "EditorAssetLibrary.h"
 #include "Factories/MaterialFactoryNew.h"
+#include "Factories/MaterialInstanceConstantFactoryNew.h"
 #include "Materials/MaterialExpressionTextureSample.h"
+#include "Materials/MaterialInstanceConstant.h"
 
 
 void UCreateMaterialByTex::CreateMaterialFromSelectedTex()
@@ -50,6 +52,10 @@ void UCreateMaterialByTex::CreateMaterialFromSelectedTex()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red,
 		                                 FString::Printf(TEXT("Successfully Connected %d Pins"), PinCount));
+	}
+	if (bCreateMaterialInstance)
+	{
+		CreateMaterialInstanceFromMaterial(NewMaterial,OutTexturePath);
 	}
 	GEngine->AddOnScreenDebugMessage(0, 10.0f, FColor::Green, OutTexturePath);
 }
@@ -175,7 +181,7 @@ void UCreateMaterialByTex::AddTextureNodeToMaterial(UMaterial* TargetMaterial, U
 		{
 			if (TryConnectORM(TargetMaterial, SelectedTexture, TextureSample))
 			{
-				PinCount+=3;
+				PinCount += 3;
 				return;
 			}
 		}
@@ -325,6 +331,26 @@ bool UCreateMaterialByTex::TryConnectORM(UMaterial* TargetMaterial, UTexture2D* 
 		}
 	}
 	return false;
+}
+
+void UCreateMaterialByTex::CreateMaterialInstanceFromMaterial(UMaterial* TargetMaterial, const FString& FolderPath)
+{
+	FString InstanceName = TargetMaterial->GetName();
+	InstanceName.InsertAt(1,TEXT("I"));
+	FAssetToolsModule& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+	UMaterialInstanceConstantFactoryNew* MaterialFactory = NewObject<UMaterialInstanceConstantFactoryNew>();
+	UObject* NewAsset = AssetTools.Get().CreateAsset(InstanceName, FolderPath, UMaterialInstanceConstant::StaticClass(),
+	                                                 MaterialFactory);
+	UMaterialInstanceConstant* NewMaterialInstance = Cast<UMaterialInstanceConstant>(NewAsset);
+	if (!NewMaterialInstance)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red,TEXT("Fail To Create Material Instance"));
+		return;
+	}
+	NewMaterialInstance->SetParentEditorOnly(TargetMaterial);
+	NewMaterialInstance->PostEditChange();
+	TargetMaterial->PostEditChange();
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue,TEXT("Create Material Instance Success"));
 }
 
 void UCreateMaterialByTex::SetSelectedTextureAssetSettings(UTexture2D* SelectedTexture, ETextureType TextureType)

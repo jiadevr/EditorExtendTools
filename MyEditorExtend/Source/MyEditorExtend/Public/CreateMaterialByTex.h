@@ -46,6 +46,8 @@ public:
 	bool bUseCustomName = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CreateMaterialFromTex")
 	bool bUsePackagedORM=false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CreateMaterialFromTex")
+	bool bCreateMaterialInstance=false;
 #pragma region TextureSuffix
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureSuffix")
 	TArray<FString> BaseColorArray = {
@@ -132,4 +134,6 @@ private:
 	bool TryConnectTexToNormal(UMaterial* TargetMaterial, UTexture2D* SelectedTexture,UMaterialExpressionTextureSample* TextureSample);
 	bool TryConnectTexToAO(UMaterial* TargetMaterial, UTexture2D* SelectedTexture,UMaterialExpressionTextureSample* TextureSample);
 	bool TryConnectORM(UMaterial*  TargetMaterial, UTexture2D* SelectedTexture,UMaterialExpressionTextureSample* TextureSample);
+	//创建材质实例
+	void CreateMaterialInstanceFromMaterial(UMaterial* TargetMaterial, const FString& FolderPath);
 };
