@@ -14,10 +14,17 @@ public:
 	
 #pragma region ContentBrowserExtend
 private:
+
 	void InitialContentBrowserExtend();
 	TSharedRef<FExtender> CreatedAndPlaceExtender(const TArray<FString>& SelectedPaths);
-	void AddDeleteUnusedEntry(FMenuBuilder& MenuBuilder);
+	void AddExtendButtonEntry(FMenuBuilder& MenuBuilder);
 	TArray<FString> CurrentSelectedPaths;
+	//删除没有引用的资源
 	void OnDeleteUnusedButtonClick();
-#pragma endregion  ContentBrowserExtend 
+	//删除空文件夹
+	void OnDeleteEmptyClick();
+	
+	
+#pragma endregion  ContentBrowserExtend
+	
 };

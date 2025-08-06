@@ -6,6 +6,7 @@
 #include "EditorAssetLibrary.h"
 #include "NotifyTools.h"
 #include "ObjectTools.h"
+#include "EditorScriptingHelpers.h"
 
 #define LOCTEXT_NAMESPACE "FMyEditorExtendModule"
 
@@ -36,24 +37,28 @@ void FMyEditorExtendModule::InitialContentBrowserExtend()
 TSharedRef<FExtender> FMyEditorExtendModule::CreatedAndPlaceExtender(const TArray<FString>& SelectedPaths)
 {
 	//1.创建一个FExtender
-	TSharedRef<FExtender> DeleteUnusedExtender(new FExtender);
+	TSharedRef<FExtender> AssetsCleanExtender(new FExtender);
 	if (!SelectedPaths.IsEmpty())
 	{
 		//2.设置锚点,绑在那个原有按键下面；锚点在EditorPreferences的Display UI Extension Points
-		DeleteUnusedExtender->AddMenuExtension(TEXT("Delete"), EExtensionHook::After, TSharedPtr<FUICommandList>(),
-		                                       FMenuExtensionDelegate::CreateRaw(
-			                                       this, &FMyEditorExtendModule::AddDeleteUnusedEntry));
+		AssetsCleanExtender->AddMenuExtension(TEXT("Delete"), EExtensionHook::After, TSharedPtr<FUICommandList>(),
+		                                      FMenuExtensionDelegate::CreateRaw(
+			                                      this, &FMyEditorExtendModule::AddExtendButtonEntry));
 	}
 	CurrentSelectedPaths = SelectedPaths;
-	return DeleteUnusedExtender;
+	return AssetsCleanExtender;
 }
 
-void FMyEditorExtendModule::AddDeleteUnusedEntry(FMenuBuilder& MenuBuilder)
+void FMyEditorExtendModule::AddExtendButtonEntry(FMenuBuilder& MenuBuilder)
 {
 	//实际添加按键
 	//FText不能直接从TEXT生成，需要包一层
-	MenuBuilder.AddMenuEntry(FText::FromString(TEXT("Delete Unused")),FText::FromString(TEXT("Delete Unused Assets")), FSlateIcon(),
+	MenuBuilder.AddMenuEntry(FText::FromString(TEXT("Delete Unused")), FText::FromString(TEXT("Delete Unused Assets")),
+	                         FSlateIcon(),
 	                         FExecuteAction::CreateRaw(this, &FMyEditorExtendModule::OnDeleteUnusedButtonClick));
+	//添加其他按键
+	MenuBuilder.AddMenuEntry(FText::FromString("Delete Empty Folders"), FText::FromString("Delete Empty Folders"),
+	                         FSlateIcon(), FExecuteAction::CreateRaw(this, &FMyEditorExtendModule::OnDeleteEmptyClick));
 }
 
 void FMyEditorExtendModule::OnDeleteUnusedButtonClick()
@@ -67,6 +72,10 @@ void FMyEditorExtendModule::OnDeleteUnusedButtonClick()
 	TArray<FAssetData> UnusedAssets;
 	for (const FString& SinglePath : CurrentSelectedPaths)
 	{
+		if (!FPaths::ValidatePath(SinglePath))
+		{
+			continue;
+		}
 		TArray<FString> AssetsInSelectedFolder = UEditorAssetLibrary::ListAssets(SinglePath);
 		if (AssetsInSelectedFolder.IsEmpty())
 		{
@@ -98,6 +107,96 @@ void FMyEditorExtendModule::OnDeleteUnusedButtonClick()
 	else
 	{
 		ObjectTools::DeleteAssets(UnusedAssets);
+	}
+}
+
+void FMyEditorExtendModule::OnDeleteEmptyClick()
+{
+	//@TODO:需要修复重定向
+	if (CurrentSelectedPaths.IsEmpty())
+	{
+		UNotifyTools::ShowMsgDialog(EAppMsgType::Ok,TEXT("No Valid Path Was Selected"));
+		return;
+	}
+	TArray<FString> EmptyFolders;
+
+	for (auto& SinglePath : CurrentSelectedPaths)
+	{
+		if (!FPaths::ValidatePath(SinglePath))
+		{
+			continue;
+		}
+		bool bHasAnyAsset = false;
+		//有其他API可以拿到文件夹IFileManager::Get().FindFiles(),但是需要转换路径，比较麻烦
+		TArray<FString> AssetsOrSubFolderInFolder = UEditorAssetLibrary::ListAssets(SinglePath, true, true);
+		TSet<FString> CandidateFile(AssetsOrSubFolderInFolder);
+		TSet<FString> FolderWithAsset;
+		for (FString& AssetOrFolderPath : AssetsOrSubFolderInFolder)
+		{
+			//这两个路径下的不删除
+			if (AssetOrFolderPath.Contains(TEXT("Developers")) || AssetOrFolderPath.Contains(TEXT("Collections")))
+			{
+				continue;
+			}
+			//返回的资产是带`.类型`的可以先把资产剔除
+			int DotIndex = INDEX_NONE;
+			AssetOrFolderPath.FindLastChar('.', DotIndex);
+			if (DotIndex != INDEX_NONE)
+			{
+				//因为是直接初始化的，首先要把资产去掉
+				FolderWithAsset.Emplace(AssetOrFolderPath);
+				FString FailureReason;
+				//这边函数的返回值和函数说明不符，返回的是资产路径去除了.
+				FString ConvertedStr = EditorScriptingHelpers::ConvertAnyPathToLongPackagePath(
+					AssetOrFolderPath, FailureReason);
+				int LastSlashIndex = INDEX_NONE;
+				ConvertedStr.FindLastChar('/', LastSlashIndex);
+				if (LastSlashIndex != INDEX_NONE)
+				{
+					ConvertedStr.LeftInline(LastSlashIndex + 1);
+				}
+				FolderWithAsset.Emplace(ConvertedStr);
+				bHasAnyAsset = true;
+			}
+			else if (!UEditorAssetLibrary::DoesDirectoryExist(AssetOrFolderPath))
+			{
+				FolderWithAsset.Emplace(AssetOrFolderPath);
+			}
+			//这个函数在5.6现在的版本有问题,无论下面有没有资产总是返回false，需要把window的区域中设置UTF8
+			//bool bHaveAsset=UEditorAssetLibrary::DoesDirectoryHaveAssets(AssetOrFolderPath);
+		}
+		EmptyFolders = CandidateFile.Difference(FolderWithAsset).Array();
+		if (!bHasAnyAsset)
+		{
+			EmptyFolders.Emplace(SinglePath);
+		}
+	}
+	if (EmptyFolders.IsEmpty())
+	{
+		UNotifyTools::ShowMsgDialog(EAppMsgType::Ok,TEXT("Found No Empty Folder"));
+		return;
+	}
+	EAppReturnType::Type UserChoice =
+		UNotifyTools::ShowMsgDialog(EAppMsgType::YesNoCancel,TEXT("Delete Empty Folder?"));
+	if (UserChoice == EAppReturnType::Yes)
+	{
+		int DeleteCounter = 0;
+		for (const auto& EmptyFolder : EmptyFolders)
+		{
+			if (UEditorAssetLibrary::DeleteDirectory(EmptyFolder))
+			{
+				DeleteCounter++;
+			}
+			else
+			{
+				UNotifyTools::ShowCornerPopupMessage(FString::Printf(TEXT("Fail To Delete %s"), *EmptyFolder));
+			}
+		}
+		if (DeleteCounter > 0)
+		{
+			UNotifyTools::ShowMsgDialog(EAppMsgType::Ok,
+			                            FString::Printf(TEXT("Delete %d Empty Folder Successfully"), DeleteCounter));
+		}
 	}
 }
 
