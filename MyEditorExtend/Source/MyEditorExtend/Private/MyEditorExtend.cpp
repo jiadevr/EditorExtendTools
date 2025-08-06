@@ -7,6 +7,7 @@
 #include "NotifyTools.h"
 #include "ObjectTools.h"
 #include "EditorScriptingHelpers.h"
+#include "SAdvancedDeleteTab.h"
 
 #define LOCTEXT_NAMESPACE "FMyEditorExtendModule"
 
@@ -55,13 +56,19 @@ void FMyEditorExtendModule::AddExtendButtonEntry(FMenuBuilder& MenuBuilder)
 	//FText不能直接从TEXT生成，需要包一层
 	MenuBuilder.AddMenuEntry(FText::FromString(TEXT("Delete Unused")), FText::FromString(TEXT("Delete Unused Assets")),
 	                         FSlateIcon(),
-	                         FExecuteAction::CreateRaw(this, &FMyEditorExtendModule::OnDeleteUnusedButtonClick));
-	//添加其他按键
-	MenuBuilder.AddMenuEntry(FText::FromString("Delete Empty Folders"), FText::FromString("Delete Empty Folders"),
-	                         FSlateIcon(), FExecuteAction::CreateRaw(this, &FMyEditorExtendModule::OnDeleteEmptyClick));
-}
+	                         FExecuteAction::CreateRaw(this, &FMyEditorExtendModule::OnDeleteUnusedButtonClicked));
 
-void FMyEditorExtendModule::OnDeleteUnusedButtonClick()
+	MenuBuilder.AddMenuEntry(FText::FromString("Delete Empty Folders"), FText::FromString("Delete Empty Folders"),
+	                         FSlateIcon(),
+	                         FExecuteAction::CreateRaw(this, &FMyEditorExtendModule::OnDeleteEmptyClicked));
+
+	MenuBuilder.AddMenuEntry(FText::FromString("Open Advanced Delete Window"),
+	                         FText::FromString("A Standalone Window For Delete Action"), FSlateIcon(),
+	                         FExecuteAction::CreateRaw(this, &FMyEditorExtendModule::OnOpenTabButtonClicked));
+	//添加其他按键
+}
+#pragma region ContentBrowserTreeViewAction
+void FMyEditorExtendModule::OnDeleteUnusedButtonClicked()
 {
 	//业务逻辑
 	if (CurrentSelectedPaths.IsEmpty())
@@ -110,7 +117,7 @@ void FMyEditorExtendModule::OnDeleteUnusedButtonClick()
 	}
 }
 
-void FMyEditorExtendModule::OnDeleteEmptyClick()
+void FMyEditorExtendModule::OnDeleteEmptyClicked()
 {
 	//@TODO:需要修复重定向
 	if (CurrentSelectedPaths.IsEmpty())
@@ -199,7 +206,51 @@ void FMyEditorExtendModule::OnDeleteEmptyClick()
 		}
 	}
 }
+#pragma endregion ContentBrowserTreeViewAction
+#pragma region OpenWindowAction
+void FMyEditorExtendModule::OnOpenTabButtonClicked()
+{
+	//注册新Tab
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AdvancedDeleteTab"),
+	                                                  FOnSpawnTab::CreateRaw(
+		                                                  this, &FMyEditorExtendModule::OnSpawnAdvancedDeleteTab)).
+	                          SetDisplayName(FText::FromString(TEXT("Advanced Delete Tab")));
+	//注意这里传入的参数应当和上边RegisterNomadTabSpawner的第一个参数**完全一致**
+	FGlobalTabmanager::Get()->TryInvokeTab(FName("AdvancedDeleteTab"));
+}
 
+TSharedRef<SDockTab> FMyEditorExtendModule::OnSpawnAdvancedDeleteTab(const FSpawnTabArgs& Args)
+{
+	TSharedRef<SDockTab> Tab = SNew(SDockTab).TabRole(NomadTab);
+	Tab->SetContent(
+		SNew(SAdvancedDeleteTab).AssetDataArray(GetAllAssetsDataUnderSelectedFolder())
+	);
+	return Tab;
+}
+
+TArray<TSharedPtr<FAssetData>> FMyEditorExtendModule::GetAllAssetsDataUnderSelectedFolder()
+{
+	TArray<TSharedPtr<FAssetData>> SelectedAssetData;
+	for (auto SelectedPath : CurrentSelectedPaths)
+	{
+		TArray<FString> AssetsUnderPath = UEditorAssetLibrary::ListAssets(SelectedPath);
+		for (const FString&  Asset : AssetsUnderPath)
+		{
+			if (Asset.Contains(TEXT("Developers")) || Asset.Contains(TEXT("Collections")))
+			{
+				continue;
+			}
+			if (!UEditorAssetLibrary::DoesAssetExist(Asset))
+			{
+				continue;
+			}
+			 FAssetData AssetData=UEditorAssetLibrary::FindAssetData(Asset);
+			SelectedAssetData.Emplace(MakeShared<FAssetData>(AssetData));
+		}
+	}
+	return SelectedAssetData;
+}
+#pragma endregion OpenWindowAction
 #undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(FMyEditorExtendModule, MyEditorExtend)

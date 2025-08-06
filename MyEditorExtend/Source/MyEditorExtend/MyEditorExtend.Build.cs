@@ -42,7 +42,8 @@ public class MyEditorExtend : ModuleRules
 				"Blutility",
 				"EditorScriptingUtilities", 
 				"AssetTools",
-				"UnrealEd"
+				"UnrealEd",
+				"InputCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

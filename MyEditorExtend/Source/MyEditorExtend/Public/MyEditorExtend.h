@@ -7,24 +7,24 @@
 class FMyEditorExtendModule : public IModuleInterface
 {
 public:
-
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	
-#pragma region ContentBrowserExtend
-private:
 
+#pragma region ContentBrowserExtend
+
+private:
 	void InitialContentBrowserExtend();
 	TSharedRef<FExtender> CreatedAndPlaceExtender(const TArray<FString>& SelectedPaths);
 	void AddExtendButtonEntry(FMenuBuilder& MenuBuilder);
 	TArray<FString> CurrentSelectedPaths;
 	//删除没有引用的资源
-	void OnDeleteUnusedButtonClick();
+	void OnDeleteUnusedButtonClicked();
 	//删除空文件夹
-	void OnDeleteEmptyClick();
-	
-	
+	void OnDeleteEmptyClicked();
+	//打开一个Slate窗口进行操作
+	void OnOpenTabButtonClicked();
+	TSharedRef<SDockTab> OnSpawnAdvancedDeleteTab(const FSpawnTabArgs& Args);
+	TArray<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
 #pragma endregion  ContentBrowserExtend
-	
 };
