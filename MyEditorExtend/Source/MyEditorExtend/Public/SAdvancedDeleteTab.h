@@ -25,6 +25,9 @@ private:
 	FSlateFontInfo HeadingFont;
 	FSlateFontInfo NormalFont;
 	TArray<TSharedPtr<FAssetData>> DisplayAssetData;
+	TSharedRef<SListView<TSharedPtr<FAssetData>>> ConstructListView();
+	TSharedPtr<SListView<TSharedPtr<FAssetData>>> ListViewComponent;
+	void RefreshListView();
 	TSharedRef<ITableRow> GetGenerateRowData(TSharedPtr<FAssetData> DisplayAssetData, const TSharedRef<STableViewBase>& OwnerTable);
 	//CheckBox构造
 	TSharedRef<SCheckBox> ConstructCheckBox(TSharedPtr<FAssetData> DisplayAssetData);

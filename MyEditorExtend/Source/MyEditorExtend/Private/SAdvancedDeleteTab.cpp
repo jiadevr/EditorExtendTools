@@ -64,6 +64,22 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 	];
 }
 
+TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeleteTab::ConstructListView()
+{
+	ListViewComponent = SNew(SListView<TSharedPtr<FAssetData>>)
+		.ListItemsSource(&DisplayAssetData)
+		.OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData);
+	return ListViewComponent.ToSharedRef();
+}
+
+void SAdvancedDeleteTab::RefreshListView()
+{
+	if (ListViewComponent.IsValid())
+	{
+		ListViewComponent->RebuildList();
+	}
+}
+
 TSharedRef<ITableRow> SAdvancedDeleteTab::GetGenerateRowData(TSharedPtr<FAssetData> SingleDisplayAssetData,
                                                              const TSharedRef<STableViewBase>& OwnerTable)
 {
@@ -165,10 +181,15 @@ TSharedRef<SButton> SAdvancedDeleteTab::ConstructDeleteButton(TSharedPtr<FAssetD
 
 FReply SAdvancedDeleteTab::OnDeleteButtonWasClicked(TSharedPtr<FAssetData> SingleDisplayAssetData)
 {
-	FMyEditorExtendModule MainModule=FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
+	FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
 	TArray<TSharedPtr<FAssetData>> DeleteAssetArray;
 	DeleteAssetArray.Emplace(SingleDisplayAssetData);
-	MainModule.DeleteGivenAssets(DeleteAssetArray);
+	bool bDeleteSuccessfully = MainModule.DeleteGivenAssets(DeleteAssetArray);
+	if (bDeleteSuccessfully && DisplayAssetData.Contains(SingleDisplayAssetData))
+	{
+		DisplayAssetData.Remove(SingleDisplayAssetData);
+	}
+	RefreshListView();
 	return FReply::Handled();
 }
 

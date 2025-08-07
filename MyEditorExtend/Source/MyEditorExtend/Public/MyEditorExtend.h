@@ -29,5 +29,6 @@ private:
 public:
 	//Slate窗口中的删除控制
 	bool DeleteGivenAssets(const TArray<TSharedPtr<FAssetData>>& TargetAssets);
+	
 #pragma endregion  ContentBrowserExtend
 };
