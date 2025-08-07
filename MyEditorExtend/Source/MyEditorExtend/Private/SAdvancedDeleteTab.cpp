@@ -19,7 +19,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 	NormalFont.Size = 12;
 	//存储传入的AssetData
 	DisplayAssetData = InArgs._AssetDataArray;
-	DisplayAssetDataArray= DisplayAssetData.Array();
+	DisplayAssetDataArray = DisplayAssetData.Array();
 	//获取传入参数在InArgs中获取时会多一个下划线
 	ChildSlot
 	[
@@ -60,6 +60,28 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 		.AutoHeight()
 		[
 			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f)
+			[
+				ConstructButton(
+					TEXT("SelectedAll"), FOnClicked::CreateSP(this, &SAdvancedDeleteTab::OnSelectAllButtonClicked))
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f)
+			[
+				ConstructButton(
+					TEXT("DeselectedAll"), FOnClicked::CreateSP(this, &SAdvancedDeleteTab::OnDeselectAllButtonClicked))
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f)
+			[
+				ConstructButton(
+					TEXT("DeselectedAll"), FOnClicked::CreateSP(this, &SAdvancedDeleteTab::OnDeleteAllButtonClicked))
+			]
+
 		]
 	];
 }
@@ -146,16 +168,14 @@ void SAdvancedDeleteTab::OnCheckBoxStateChange(ECheckBoxState NewState, TSharedP
 	switch (NewState)
 	{
 	case ECheckBoxState::Unchecked:
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red,
-		                                 FString::Printf(
-			                                 TEXT("%s was Unchecked"), *SingleDisplayAssetData->GetAsset()->GetName()));
+		if (CheckedAssets.Contains(SingleDisplayAssetData))
+		{
+			CheckedAssets.Remove(SingleDisplayAssetData);
+		}
 		break;
 
 	case ECheckBoxState::Checked:
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green,
-		                                 FString::Printf(
-			                                 TEXT("%s was Checked"), *SingleDisplayAssetData->GetAsset()->GetName()));
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green,TEXT("111111"));
+		CheckedAssets.Add(SingleDisplayAssetData);
 		break;
 
 	case ECheckBoxState::Undetermined:
@@ -190,6 +210,45 @@ FReply SAdvancedDeleteTab::OnDeleteButtonWasClicked(TSharedPtr<FAssetData> Singl
 		DisplayAssetData.Remove(SingleDisplayAssetData);
 	}
 	RefreshListView();
+	return FReply::Handled();
+}
+
+TSharedRef<SButton> SAdvancedDeleteTab::ConstructButton(FString ButtonText, FOnClicked BindEvent)
+{
+	TSharedRef<SButton> Button = SNew(SButton)
+		.ContentPadding(FMargin(5.0f))
+		.OnClicked(BindEvent)
+		[
+			ConstructTextBlock(ButtonText)
+		];
+	return Button;
+}
+
+FReply SAdvancedDeleteTab::OnSelectAllButtonClicked()
+{
+	return FReply::Handled();
+}
+
+FReply SAdvancedDeleteTab::OnDeselectAllButtonClicked()
+{
+	return FReply::Handled();
+}
+
+FReply SAdvancedDeleteTab::OnDeleteAllButtonClicked()
+{
+	if (!CheckedAssets.IsEmpty())
+	{
+		TArray<TSharedPtr<FAssetData>> CheckAssetsArray=MoveTemp(CheckedAssets.Array());
+		FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
+		bool bDeleteSuccessfully=MainModule.DeleteGivenAssets(CheckAssetsArray);
+		if (bDeleteSuccessfully)
+		{
+			DisplayAssetData=DisplayAssetData.Difference(CheckedAssets);
+			DisplayAssetDataArray=MoveTemp(DisplayAssetData.Array());
+			RefreshListView();
+			CheckedAssets.Empty();
+		}
+	}
 	return FReply::Handled();
 }
 

@@ -34,10 +34,18 @@ private:
 	//CheckBox构造
 	TSharedRef<SCheckBox> ConstructCheckBox(TSharedPtr<FAssetData> DisplayAssetData);
 	void OnCheckBoxStateChange(ECheckBoxState NewState, TSharedPtr<FAssetData> DisplayAssetData);
+	//被勾选的对象
+	TSet<TSharedPtr<FAssetData>> CheckedAssets;
 	//资产名称和资产类型文字
 	TSharedRef<STextBlock> ConstructTextBlock(FString DisplayText,bool bIsHeading=false);
 	//删除功能按钮
 	TSharedRef<SButton> ConstructDeleteButton(TSharedPtr<FAssetData> DisplayAssetData);
 	//参数靠静态单播负载进来
 	FReply OnDeleteButtonWasClicked(TSharedPtr<FAssetData> DisplayAssetData);
+	//创建底部按钮
+	TSharedRef<SButton> ConstructButton(FString ButtonText,FOnClicked BindEvent);
+	FReply OnSelectAllButtonClicked();
+	FReply OnDeselectAllButtonClicked();
+	FReply OnDeleteAllButtonClicked();
+	
 };
