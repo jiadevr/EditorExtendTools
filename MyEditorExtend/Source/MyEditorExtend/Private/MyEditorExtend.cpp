@@ -234,7 +234,7 @@ TArray<TSharedPtr<FAssetData>> FMyEditorExtendModule::GetAllAssetsDataUnderSelec
 	for (auto SelectedPath : CurrentSelectedPaths)
 	{
 		TArray<FString> AssetsUnderPath = UEditorAssetLibrary::ListAssets(SelectedPath);
-		for (const FString&  Asset : AssetsUnderPath)
+		for (const FString& Asset : AssetsUnderPath)
 		{
 			if (Asset.Contains(TEXT("Developers")) || Asset.Contains(TEXT("Collections")))
 			{
@@ -244,12 +244,29 @@ TArray<TSharedPtr<FAssetData>> FMyEditorExtendModule::GetAllAssetsDataUnderSelec
 			{
 				continue;
 			}
-			 FAssetData AssetData=UEditorAssetLibrary::FindAssetData(Asset);
+			FAssetData AssetData = UEditorAssetLibrary::FindAssetData(Asset);
 			SelectedAssetData.Emplace(MakeShared<FAssetData>(AssetData));
 		}
 	}
 	return SelectedAssetData;
 }
+
+bool FMyEditorExtendModule::DeleteGivenAssets(const TArray<TSharedPtr<FAssetData>>&TargetAssets)
+{
+	TArray<FAssetData> AssetsToDelete;
+	for (const TSharedPtr<FAssetData>& SingleAsset : TargetAssets)
+	{
+		if (!UEditorAssetLibrary::DoesAssetExist(SingleAsset->GetObjectPathString()))
+		{
+			UNotifyTools::ShowCornerPopupMessage(FString::Printf(TEXT("Asset:%s Doesn't Exist"),*SingleAsset->GetExportTextName()));
+			continue;
+		}
+		AssetsToDelete.Emplace(*SingleAsset.Get());
+	}
+	int DeleteCount= ObjectTools::DeleteAssets(AssetsToDelete);
+	return DeleteCount==TargetAssets.Num();
+}
+
 #pragma endregion OpenWindowAction
 #undef LOCTEXT_NAMESPACE
 
