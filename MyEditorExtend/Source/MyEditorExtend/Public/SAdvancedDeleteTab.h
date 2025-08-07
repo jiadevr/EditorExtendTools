@@ -29,6 +29,7 @@ private:
 	TArray<TSharedPtr<FAssetData>> DisplayAssetDataArray;
 	TSharedRef<SListView<TSharedPtr<FAssetData>>> ConstructListView();
 	TSharedPtr<SListView<TSharedPtr<FAssetData>>> ListViewComponent;
+	void OnListViewRowWasDoubleClicked(TSharedPtr<FAssetData> ClickedAsset);
 	void RefreshListView();
 	TSharedRef<ITableRow> GetGenerateRowData(TSharedPtr<FAssetData> DisplayAssetData, const TSharedRef<STableViewBase>& OwnerTable);
 	//CheckBox构造

@@ -93,8 +93,15 @@ TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeleteTab::ConstructListV
 {
 	ListViewComponent = SNew(SListView<TSharedPtr<FAssetData>>)
 		.ListItemsSource(&DisplayAssetDataArray)
-		.OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData);
+		.OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData)
+		.OnMouseButtonDoubleClick(this,&SAdvancedDeleteTab::OnListViewRowWasDoubleClicked);
 	return ListViewComponent.ToSharedRef();
+}
+
+void SAdvancedDeleteTab::OnListViewRowWasDoubleClicked(TSharedPtr<FAssetData> ClickedAsset)
+{
+	FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
+	MainModule.OpenPathInContentBrowser(ClickedAsset->GetObjectPathString());
 }
 
 void SAdvancedDeleteTab::RefreshListView()

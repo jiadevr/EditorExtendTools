@@ -268,6 +268,11 @@ bool FMyEditorExtendModule::DeleteGivenAssets(const TArray<TSharedPtr<FAssetData
 	return DeleteCount==TargetAssets.Num();
 }
 
+void FMyEditorExtendModule::OpenPathInContentBrowser(const FString& AssetPath)
+{
+	UEditorAssetLibrary::SyncBrowserToObjects(TArray<FString>{AssetPath});
+}
+
 #pragma endregion OpenWindowAction
 #undef LOCTEXT_NAMESPACE
 
