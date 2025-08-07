@@ -15,7 +15,7 @@ public:
 		{
 		}
 
-		SLATE_ARGUMENT(TArray<TSharedPtr<FAssetData>>,AssetDataArray)
+		SLATE_ARGUMENT(TSet<TSharedPtr<FAssetData>>,AssetDataArray)
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
@@ -24,7 +24,9 @@ private:
 	//字体类设置
 	FSlateFontInfo HeadingFont;
 	FSlateFontInfo NormalFont;
-	TArray<TSharedPtr<FAssetData>> DisplayAssetData;
+	TSet<TSharedPtr<FAssetData>> DisplayAssetData;
+	//ListView传入的不能为Set转出的右值，必须保存TArray
+	TArray<TSharedPtr<FAssetData>> DisplayAssetDataArray;
 	TSharedRef<SListView<TSharedPtr<FAssetData>>> ConstructListView();
 	TSharedPtr<SListView<TSharedPtr<FAssetData>>> ListViewComponent;
 	void RefreshListView();

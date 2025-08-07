@@ -25,7 +25,7 @@ private:
 	//打开一个Slate窗口进行操作
 	void OnOpenTabButtonClicked();
 	TSharedRef<SDockTab> OnSpawnAdvancedDeleteTab(const FSpawnTabArgs& Args);
-	TArray<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
+	TSet<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
 public:
 	//Slate窗口中的删除控制
 	bool DeleteGivenAssets(const TArray<TSharedPtr<FAssetData>>& TargetAssets);

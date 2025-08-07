@@ -19,6 +19,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 	NormalFont.Size = 12;
 	//存储传入的AssetData
 	DisplayAssetData = InArgs._AssetDataArray;
+	DisplayAssetDataArray= DisplayAssetData.Array();
 	//获取传入参数在InArgs中获取时会多一个下划线
 	ChildSlot
 	[
@@ -39,7 +40,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 			.AutoWidth()
 			[
 				SNew(STextBlock)
-				.Text(FText::FromString(TEXT("Tips")))
+				.Text(FText::FromString(TEXT("Check")))
 			]
 		]
 		+ SVerticalBox::Slot()
@@ -50,8 +51,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 			.VAlign(VAlign_Fill)
 			[
 				SNew(SListView<TSharedPtr<FAssetData>>)
-				                                       .ItemHeight(24.0f)
-				                                       .ListItemsSource(&DisplayAssetData)
+				                                       .ListItemsSource(&DisplayAssetDataArray)
 				//逐行显示效果
 				                                       .OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData)
 			]
@@ -67,7 +67,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeleteTab::ConstructListView()
 {
 	ListViewComponent = SNew(SListView<TSharedPtr<FAssetData>>)
-		.ListItemsSource(&DisplayAssetData)
+		.ListItemsSource(&DisplayAssetDataArray)
 		.OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData);
 	return ListViewComponent.ToSharedRef();
 }

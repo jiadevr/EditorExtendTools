@@ -221,6 +221,7 @@ void FMyEditorExtendModule::OnOpenTabButtonClicked()
 
 TSharedRef<SDockTab> FMyEditorExtendModule::OnSpawnAdvancedDeleteTab(const FSpawnTabArgs& Args)
 {
+	
 	TSharedRef<SDockTab> Tab = SNew(SDockTab).TabRole(NomadTab);
 	Tab->SetContent(
 		SNew(SAdvancedDeleteTab).AssetDataArray(GetAllAssetsDataUnderSelectedFolder())
@@ -228,9 +229,9 @@ TSharedRef<SDockTab> FMyEditorExtendModule::OnSpawnAdvancedDeleteTab(const FSpaw
 	return Tab;
 }
 
-TArray<TSharedPtr<FAssetData>> FMyEditorExtendModule::GetAllAssetsDataUnderSelectedFolder()
+TSet<TSharedPtr<FAssetData>> FMyEditorExtendModule::GetAllAssetsDataUnderSelectedFolder()
 {
-	TArray<TSharedPtr<FAssetData>> SelectedAssetData;
+	TSet<TSharedPtr<FAssetData>> SelectedAssetData;
 	for (auto SelectedPath : CurrentSelectedPaths)
 	{
 		TArray<FString> AssetsUnderPath = UEditorAssetLibrary::ListAssets(SelectedPath);
