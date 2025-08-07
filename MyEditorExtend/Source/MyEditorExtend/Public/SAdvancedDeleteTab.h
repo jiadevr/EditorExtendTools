@@ -34,6 +34,7 @@ private:
 	//CheckBox构造
 	TSharedRef<SCheckBox> ConstructCheckBox(TSharedPtr<FAssetData> DisplayAssetData);
 	void OnCheckBoxStateChange(ECheckBoxState NewState, TSharedPtr<FAssetData> DisplayAssetData);
+	TArray<TSharedPtr<SCheckBox>> CheckBoxes;
 	//被勾选的对象
 	TSet<TSharedPtr<FAssetData>> CheckedAssets;
 	//资产名称和资产类型文字

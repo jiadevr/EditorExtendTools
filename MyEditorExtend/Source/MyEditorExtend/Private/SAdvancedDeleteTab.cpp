@@ -12,6 +12,9 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 {
 	//启用键盘交互
 	bCanSupportFocus = true;
+	//初始化参数
+	CheckedAssets.Empty();
+	CheckBoxes.Empty();
 	//定义字体样式
 	HeadingFont = FCoreStyle::Get().GetFontStyle(FName("EmbossedText"));
 	HeadingFont.Size = 30;
@@ -79,7 +82,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 			.Padding(5.0f)
 			[
 				ConstructButton(
-					TEXT("DeselectedAll"), FOnClicked::CreateSP(this, &SAdvancedDeleteTab::OnDeleteAllButtonClicked))
+					TEXT("DeleteAll"), FOnClicked::CreateSP(this, &SAdvancedDeleteTab::OnDeleteAllButtonClicked))
 			]
 
 		]
@@ -160,6 +163,7 @@ TSharedRef<SCheckBox> SAdvancedDeleteTab::ConstructCheckBox(TSharedPtr<FAssetDat
 		                                                this, &SAdvancedDeleteTab::OnCheckBoxStateChange,
 		                                                SingleDisplayAssetData)
 	                                                .Visibility(EVisibility::Visible);
+	CheckBoxes.Emplace(CheckBox);
 	return CheckBox;
 }
 
@@ -226,11 +230,31 @@ TSharedRef<SButton> SAdvancedDeleteTab::ConstructButton(FString ButtonText, FOnC
 
 FReply SAdvancedDeleteTab::OnSelectAllButtonClicked()
 {
+	if (!CheckBoxes.IsEmpty())
+	{
+		for (const TSharedPtr<SCheckBox>& CheckBox : CheckBoxes)
+		{
+			if (!CheckBox->IsChecked())
+			{
+				CheckBox->SetIsChecked(ECheckBoxState::Checked);
+			}
+		}
+	}
 	return FReply::Handled();
 }
 
 FReply SAdvancedDeleteTab::OnDeselectAllButtonClicked()
 {
+	if (!CheckBoxes.IsEmpty())
+	{
+		for (const TSharedPtr<SCheckBox>& CheckBox : CheckBoxes)
+		{
+			if (CheckBox->IsChecked())
+			{
+				CheckBox->SetIsChecked(ECheckBoxState::Unchecked);
+			}
+		}
+	}
 	return FReply::Handled();
 }
 
@@ -238,13 +262,15 @@ FReply SAdvancedDeleteTab::OnDeleteAllButtonClicked()
 {
 	if (!CheckedAssets.IsEmpty())
 	{
-		TArray<TSharedPtr<FAssetData>> CheckAssetsArray=MoveTemp(CheckedAssets.Array());
+		TArray<TSharedPtr<FAssetData>> CheckAssetsArray=CheckedAssets.Array();
 		FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
+		TArray<int32> A{100,10};
+		TArray<int32> B=MoveTemp(A);
 		bool bDeleteSuccessfully=MainModule.DeleteGivenAssets(CheckAssetsArray);
 		if (bDeleteSuccessfully)
 		{
 			DisplayAssetData=DisplayAssetData.Difference(CheckedAssets);
-			DisplayAssetDataArray=MoveTemp(DisplayAssetData.Array());
+			DisplayAssetDataArray=DisplayAssetData.Array();
 			RefreshListView();
 			CheckedAssets.Empty();
 		}
