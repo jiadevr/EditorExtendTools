@@ -17,6 +17,7 @@ public:
 		}
 
 		SLATE_ARGUMENT(TSet<TSharedPtr<FAssetData>>, AssetDataArray)
+		SLATE_ARGUMENT(TArray<FString>,InCurrentPaths)
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
@@ -24,6 +25,9 @@ public:
 
 private:
 	FMyEditorExtendModule& GetMainModule()const;
+	//传入路径
+	TArray<FString> Paths;
+	FString FormatMultiPath();
 	//字体类设置
 	FSlateFontInfo HeadingFont;
 	FSlateFontInfo NormalFont;

@@ -13,6 +13,8 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 {
 	//启用键盘交互
 	bCanSupportFocus = true;
+	//路径参数
+	Paths=InArgs._InCurrentPaths;
 	//初始化参数
 	CheckedAssets.Empty();
 	CheckBoxes.Empty();
@@ -40,6 +42,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 			.Justification(ETextJustify::Center)
 		]
 		+ SVerticalBox::Slot()
+		.HAlign(HAlign_Fill)
 		.AutoHeight()
 		[
 			SNew(SHorizontalBox)
@@ -47,6 +50,30 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 			.AutoWidth()
 			[
 				ConstructComboBox()
+			]
+			+ SHorizontalBox::Slot()
+			.HAlign(HAlign_Fill)
+			//.AutoWidth()
+			[
+				SNew(STextBlock)
+				.Font(NormalFont)
+				.Justification(ETextJustify::Center)
+				.Text(FText::FromString("Chose Filter Type By ComboBox"))
+			]
+			+ SHorizontalBox::Slot()
+			.HAlign(HAlign_Right)
+			.AutoWidth()
+			[
+				SNew(SScrollBox)
+				.Orientation(Orient_Horizontal)
+				+SScrollBox::Slot()
+				.HAlign(HAlign_Fill)
+				[
+					SNew(STextBlock)
+					.Font(NormalFont)
+					.Justification(ETextJustify::Center)
+					.Text(FText::FromString(FormatMultiPath()))
+				]
 			]
 		]
 		+ SVerticalBox::Slot()
@@ -103,6 +130,20 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 FMyEditorExtendModule& SAdvancedDeleteTab::GetMainModule() const
 {
 	return FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
+}
+
+FString SAdvancedDeleteTab::FormatMultiPath()
+{
+	if (Paths.IsEmpty())
+	{
+		return "";
+	}
+	FString Res;
+	for (int i=0;i<Paths.Num();i++)
+	{
+		Res+=FString::Printf(TEXT("[%d]:%s\n"),i,*Paths[i]);
+	}
+	return Res;
 }
 
 TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeleteTab::ConstructListView()

@@ -18,8 +18,7 @@ void FMyEditorExtendModule::StartupModule()
 
 void FMyEditorExtendModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FName("AdvancedDeleteTab"));
 }
 
 void FMyEditorExtendModule::InitialContentBrowserExtend()
@@ -224,7 +223,9 @@ TSharedRef<SDockTab> FMyEditorExtendModule::OnSpawnAdvancedDeleteTab(const FSpaw
 	
 	TSharedRef<SDockTab> Tab = SNew(SDockTab).TabRole(NomadTab);
 	Tab->SetContent(
-		SNew(SAdvancedDeleteTab).AssetDataArray(GetAllAssetsDataUnderSelectedFolder())
+		SNew(SAdvancedDeleteTab)
+		.AssetDataArray(GetAllAssetsDataUnderSelectedFolder())
+		.InCurrentPaths(CurrentSelectedPaths)
 	);
 	return Tab;
 }
@@ -234,9 +235,11 @@ TSet<TSharedPtr<FAssetData>> FMyEditorExtendModule::GetAllAssetsDataUnderSelecte
 	TSet<TSharedPtr<FAssetData>> SelectedAssetData;
 	for (auto SelectedPath : CurrentSelectedPaths)
 	{
+		
 		TArray<FString> AssetsUnderPath = UEditorAssetLibrary::ListAssets(SelectedPath);
 		for (const FString& Asset : AssetsUnderPath)
 		{
+			FAssetData Data=UEditorAssetLibrary::FindAssetData(Asset);
 			if (Asset.Contains(TEXT("Developers")) || Asset.Contains(TEXT("Collections")))
 			{
 				continue;
