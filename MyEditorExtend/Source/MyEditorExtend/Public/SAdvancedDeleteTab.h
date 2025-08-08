@@ -56,9 +56,9 @@ private:
 	FReply OnDeselectAllButtonClicked();
 	FReply OnDeleteAllButtonClicked();
 	//下拉框
-	TSharedRef<SComboBox<TSharedPtr<FString>>> ConstructComboBox();
-	TArray<TSharedPtr<FString>> ComboBoxElems;
-	TSharedRef<SWidget> OnGeneratedComboContent(TSharedPtr<FString> SourceItem);
-	void OnComboBoxSelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo);
+	TSharedRef<SComboBox<TSharedPtr<FName>>> ConstructComboBox();
+	TArray<TSharedPtr<FName>> ComboBoxElems;
+	TSharedRef<SWidget> OnGeneratedComboContent(TSharedPtr<FName> SourceItem);
+	void OnComboBoxSelectionChanged(TSharedPtr<FName> NewSelection, ESelectInfo::Type SelectInfo);
 	TSharedPtr<STextBlock> ComboDisplayTextBlock;
 };

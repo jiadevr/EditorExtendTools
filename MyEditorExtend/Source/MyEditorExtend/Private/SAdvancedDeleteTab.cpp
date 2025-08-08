@@ -17,8 +17,8 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 	CheckedAssets.Empty();
 	CheckBoxes.Empty();
 	ComboBoxElems.Empty();
-	ComboBoxElems.Emplace(MakeShared<FString>(TEXT("ListAllAssets")));
-	ComboBoxElems.Emplace(MakeShared<FString>(TEXT("ListUnusedAssets")));
+	ComboBoxElems.Emplace(MakeShared<FName>(TEXT("ListAllAssets")));
+	ComboBoxElems.Emplace(MakeShared<FName>(TEXT("ListUnusedAssets")));
 	//定义字体样式
 	HeadingFont = FCoreStyle::Get().GetFontStyle(FName("EmbossedText"));
 	HeadingFont.Size = 30;
@@ -321,9 +321,9 @@ FReply SAdvancedDeleteTab::OnDeleteAllButtonClicked()
 	return FReply::Handled();
 }
 
-TSharedRef<SComboBox<TSharedPtr<FString>>> SAdvancedDeleteTab::ConstructComboBox()
+TSharedRef<SComboBox<TSharedPtr<FName>>> SAdvancedDeleteTab::ConstructComboBox()
 {
-	TSharedRef<SComboBox<TSharedPtr<FString>>> ComboBox = SNew(SComboBox<TSharedPtr<FString>>)
+	TSharedRef<SComboBox<TSharedPtr<FName>>> ComboBox = SNew(SComboBox<TSharedPtr<FName>>)
 		.OptionsSource(&ComboBoxElems)
 		.OnGenerateWidget(this, &SAdvancedDeleteTab::OnGeneratedComboContent)
 		.OnSelectionChanged(this, &SAdvancedDeleteTab::OnComboBoxSelectionChanged)
@@ -334,24 +334,24 @@ TSharedRef<SComboBox<TSharedPtr<FString>>> SAdvancedDeleteTab::ConstructComboBox
 	return ComboBox;
 }
 
-TSharedRef<SWidget> SAdvancedDeleteTab::OnGeneratedComboContent(TSharedPtr<FString> SourceItem)
+TSharedRef<SWidget> SAdvancedDeleteTab::OnGeneratedComboContent(TSharedPtr<FName> SourceItem)
 {
 	TSharedRef<STextBlock> ComboBoxText = SNew(STextBlock)
-		.Text(FText::FromString(*SourceItem.Get()));
+		.Text(FText::FromName(*SourceItem.Get()));
 	return ComboBoxText;
 }
 
-void SAdvancedDeleteTab::OnComboBoxSelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo)
+void SAdvancedDeleteTab::OnComboBoxSelectionChanged(TSharedPtr<FName> NewSelection, ESelectInfo::Type SelectInfo)
 {
-	ComboDisplayTextBlock->SetText(FText::FromString(*NewSelection.Get()));
+	ComboDisplayTextBlock->SetText(FText::FromName(*NewSelection.Get()));
 	CheckedAssets.Empty();
 	CheckBoxes.Empty();
-	ComboDisplayTextBlock->SetText(FText::FromString(*NewSelection.Get()));
-	if (*NewSelection.Get() == "ListAllAssets")
+	ComboDisplayTextBlock->SetText(FText::FromName(*NewSelection.Get()));
+	if (*NewSelection.Get() == FName("ListAllAssets"))
 	{
 		DisplayAssetData = GetMainModule().GetAllAssetsDataUnderSelectedFolder();
 	}
-	else if (*NewSelection.Get() == "ListUnusedAssets")
+	else if (*NewSelection.Get() == FName("ListUnusedAssets"))
 	{
 		DisplayAssetData = GetMainModule().ListAllUnusedAssets(DisplayAssetData);
 	}
