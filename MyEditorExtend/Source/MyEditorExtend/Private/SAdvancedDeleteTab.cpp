@@ -3,6 +3,7 @@
 
 #include "SAdvancedDeleteTab.h"
 
+#include "ClickableBorder.h"
 #include "MyEditorExtend.h"
 #include "SlateOptMacros.h"
 
@@ -93,13 +94,14 @@ TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeleteTab::ConstructListV
 {
 	ListViewComponent = SNew(SListView<TSharedPtr<FAssetData>>)
 		.ListItemsSource(&DisplayAssetDataArray)
-		.OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData)
-		.OnMouseButtonDoubleClick(this,&SAdvancedDeleteTab::OnListViewRowWasDoubleClicked);
+		.OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData);
 	return ListViewComponent.ToSharedRef();
+	//https://zhuanlan.zhihu.com/p/127184008
 }
 
 void SAdvancedDeleteTab::OnListViewRowWasDoubleClicked(TSharedPtr<FAssetData> ClickedAsset)
 {
+	UE_LOG(LogTemp, Display, TEXT("Asset %s Was Clicked"), *ClickedAsset->GetObjectPathString())
 	FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
 	MainModule.OpenPathInContentBrowser(ClickedAsset->GetObjectPathString());
 }
@@ -128,6 +130,7 @@ TSharedRef<ITableRow> SAdvancedDeleteTab::GetGenerateRowData(TSharedPtr<FAssetDa
 	{
 		SingleAssetClassName.RightChopInline(DotIndex + 1);
 	}
+
 	auto ListViewChild = SNew(STableRow<TSharedPtr<FAssetData>>, OwnerTable)
 		[
 			SNew(SHorizontalBox)
@@ -143,7 +146,16 @@ TSharedRef<ITableRow> SAdvancedDeleteTab::GetGenerateRowData(TSharedPtr<FAssetDa
 			.VAlign(VAlign_Center)
 			.FillWidth(0.3f)
 			[
-				ConstructTextBlock(SingleAssetDisplayName)
+				//5.6不能支持直接在拼凑的一行里直接绑定OnMouseDoubleClicked等事件了，必须用子类包一层，这边直接包裹了名称TextBlock
+				//继承SBorder直接用[]包裹，不用+Slot
+				SNew(SClickableBorder)
+				.InAssetData(SingleDisplayAssetData)
+				//委托方式支持传入自定义函数，静态单播支持带负载
+				.CustomDoubleEvent(this,
+					&SAdvancedDeleteTab::HandleTextContainerDoubleClicked, SingleDisplayAssetData)
+				[
+					ConstructTextBlock(SingleAssetDisplayName)
+				]
 			]
 			+ SHorizontalBox::Slot()
 			.HAlign(HAlign_Left)
@@ -202,6 +214,16 @@ TSharedRef<STextBlock> SAdvancedDeleteTab::ConstructTextBlock(FString DisplayTex
 		.ColorAndOpacity(FColor::White);
 	return TextBlock;
 }
+
+void SAdvancedDeleteTab::HandleTextContainerDoubleClicked(const FGeometry& InGeometry,
+                                                          const FPointerEvent& InPointerEvent,
+                                                          const TSharedPtr<FAssetData> TargetAssetData)
+{
+	FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
+	MainModule.OpenPathInContentBrowser(TargetAssetData->GetObjectPathString());
+	UE_LOG(LogTemp, Display, TEXT("Was Clicked"));
+}
+
 
 TSharedRef<SButton> SAdvancedDeleteTab::ConstructDeleteButton(TSharedPtr<FAssetData> SingleDisplayAssetData)
 {
@@ -269,15 +291,16 @@ FReply SAdvancedDeleteTab::OnDeleteAllButtonClicked()
 {
 	if (!CheckedAssets.IsEmpty())
 	{
-		TArray<TSharedPtr<FAssetData>> CheckAssetsArray=CheckedAssets.Array();
-		FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
-		TArray<int32> A{100,10};
-		TArray<int32> B=MoveTemp(A);
-		bool bDeleteSuccessfully=MainModule.DeleteGivenAssets(CheckAssetsArray);
+		TArray<TSharedPtr<FAssetData>> CheckAssetsArray = CheckedAssets.Array();
+		FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(
+			TEXT("MyEditorExtend"));
+		TArray<int32> A{100, 10};
+		TArray<int32> B = MoveTemp(A);
+		bool bDeleteSuccessfully = MainModule.DeleteGivenAssets(CheckAssetsArray);
 		if (bDeleteSuccessfully)
 		{
-			DisplayAssetData=DisplayAssetData.Difference(CheckedAssets);
-			DisplayAssetDataArray=DisplayAssetData.Array();
+			DisplayAssetData = DisplayAssetData.Difference(CheckedAssets);
+			DisplayAssetDataArray = DisplayAssetData.Array();
 			RefreshListView();
 			CheckedAssets.Empty();
 		}
