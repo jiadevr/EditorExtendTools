@@ -16,6 +16,9 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 	//初始化参数
 	CheckedAssets.Empty();
 	CheckBoxes.Empty();
+	ComboBoxElems.Empty();
+	ComboBoxElems.Emplace(MakeShared<FString>(TEXT("ListAllAssets")));
+	ComboBoxElems.Emplace(MakeShared<FString>(TEXT("ListUnusedAssets")));
 	//定义字体样式
 	HeadingFont = FCoreStyle::Get().GetFontStyle(FName("EmbossedText"));
 	HeadingFont.Size = 30;
@@ -43,6 +46,16 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
 			[
+				ConstructComboBox()
+			]
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
 				SNew(STextBlock)
 				.Text(FText::FromString(TEXT("Check")))
 			]
@@ -54,10 +67,7 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 			+ SScrollBox::Slot()
 			.VAlign(VAlign_Fill)
 			[
-				SNew(SListView<TSharedPtr<FAssetData>>)
-				                                       .ListItemsSource(&DisplayAssetDataArray)
-				//逐行显示效果
-				                                       .OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData)
+				ConstructListView()
 			]
 		]
 		+ SVerticalBox::Slot()
@@ -90,26 +100,30 @@ void SAdvancedDeleteTab::Construct(const FArguments& InArgs)
 	];
 }
 
+FMyEditorExtendModule& SAdvancedDeleteTab::GetMainModule() const
+{
+	return FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
+}
+
 TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeleteTab::ConstructListView()
 {
 	ListViewComponent = SNew(SListView<TSharedPtr<FAssetData>>)
 		.ListItemsSource(&DisplayAssetDataArray)
 		.OnGenerateRow(this, &SAdvancedDeleteTab::GetGenerateRowData);
 	return ListViewComponent.ToSharedRef();
-	//https://zhuanlan.zhihu.com/p/127184008
 }
 
 void SAdvancedDeleteTab::OnListViewRowWasDoubleClicked(TSharedPtr<FAssetData> ClickedAsset)
 {
 	UE_LOG(LogTemp, Display, TEXT("Asset %s Was Clicked"), *ClickedAsset->GetObjectPathString())
-	FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
-	MainModule.OpenPathInContentBrowser(ClickedAsset->GetObjectPathString());
+	GetMainModule().OpenPathInContentBrowser(ClickedAsset->GetObjectPathString());
 }
 
 void SAdvancedDeleteTab::RefreshListView()
 {
 	if (ListViewComponent.IsValid())
 	{
+		DisplayAssetDataArray = DisplayAssetData.Array();
 		ListViewComponent->RebuildList();
 	}
 }
@@ -149,10 +163,11 @@ TSharedRef<ITableRow> SAdvancedDeleteTab::GetGenerateRowData(TSharedPtr<FAssetDa
 				//5.6不能支持直接在拼凑的一行里直接绑定OnMouseDoubleClicked等事件了，必须用子类包一层，这边直接包裹了名称TextBlock
 				//继承SBorder直接用[]包裹，不用+Slot
 				SNew(SClickableBorder)
-				.InAssetData(SingleDisplayAssetData)
+				                      .InAssetData(SingleDisplayAssetData)
 				//委托方式支持传入自定义函数，静态单播支持带负载
-				.CustomDoubleEvent(this,
-					&SAdvancedDeleteTab::HandleTextContainerDoubleClicked, SingleDisplayAssetData)
+				                      .CustomDoubleEvent(this,
+				                                         &SAdvancedDeleteTab::HandleTextContainerDoubleClicked,
+				                                         SingleDisplayAssetData)
 				[
 					ConstructTextBlock(SingleAssetDisplayName)
 				]
@@ -160,12 +175,14 @@ TSharedRef<ITableRow> SAdvancedDeleteTab::GetGenerateRowData(TSharedPtr<FAssetDa
 			+ SHorizontalBox::Slot()
 			.HAlign(HAlign_Left)
 			.VAlign(VAlign_Center)
+			.FillWidth(0.3f)
 			[
 				ConstructTextBlock(SingleAssetClassName)
 			]
 			+ SHorizontalBox::Slot()
 			.HAlign(HAlign_Center)
 			.VAlign(VAlign_Fill)
+			.FillWidth(0.3f)
 			[
 				ConstructDeleteButton(SingleDisplayAssetData)
 			]
@@ -219,8 +236,7 @@ void SAdvancedDeleteTab::HandleTextContainerDoubleClicked(const FGeometry& InGeo
                                                           const FPointerEvent& InPointerEvent,
                                                           const TSharedPtr<FAssetData> TargetAssetData)
 {
-	FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
-	MainModule.OpenPathInContentBrowser(TargetAssetData->GetObjectPathString());
+	GetMainModule().OpenPathInContentBrowser(TargetAssetData->GetObjectPathString());
 	UE_LOG(LogTemp, Display, TEXT("Was Clicked"));
 }
 
@@ -234,10 +250,9 @@ TSharedRef<SButton> SAdvancedDeleteTab::ConstructDeleteButton(TSharedPtr<FAssetD
 
 FReply SAdvancedDeleteTab::OnDeleteButtonWasClicked(TSharedPtr<FAssetData> SingleDisplayAssetData)
 {
-	FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(TEXT("MyEditorExtend"));
 	TArray<TSharedPtr<FAssetData>> DeleteAssetArray;
 	DeleteAssetArray.Emplace(SingleDisplayAssetData);
-	bool bDeleteSuccessfully = MainModule.DeleteGivenAssets(DeleteAssetArray);
+	bool bDeleteSuccessfully = GetMainModule().DeleteGivenAssets(DeleteAssetArray);
 	if (bDeleteSuccessfully && DisplayAssetData.Contains(SingleDisplayAssetData))
 	{
 		DisplayAssetData.Remove(SingleDisplayAssetData);
@@ -292,11 +307,9 @@ FReply SAdvancedDeleteTab::OnDeleteAllButtonClicked()
 	if (!CheckedAssets.IsEmpty())
 	{
 		TArray<TSharedPtr<FAssetData>> CheckAssetsArray = CheckedAssets.Array();
-		FMyEditorExtendModule MainModule = FModuleManager::LoadModuleChecked<FMyEditorExtendModule>(
-			TEXT("MyEditorExtend"));
 		TArray<int32> A{100, 10};
 		TArray<int32> B = MoveTemp(A);
-		bool bDeleteSuccessfully = MainModule.DeleteGivenAssets(CheckAssetsArray);
+		bool bDeleteSuccessfully = GetMainModule().DeleteGivenAssets(CheckAssetsArray);
 		if (bDeleteSuccessfully)
 		{
 			DisplayAssetData = DisplayAssetData.Difference(CheckedAssets);
@@ -306,6 +319,43 @@ FReply SAdvancedDeleteTab::OnDeleteAllButtonClicked()
 		}
 	}
 	return FReply::Handled();
+}
+
+TSharedRef<SComboBox<TSharedPtr<FString>>> SAdvancedDeleteTab::ConstructComboBox()
+{
+	TSharedRef<SComboBox<TSharedPtr<FString>>> ComboBox = SNew(SComboBox<TSharedPtr<FString>>)
+		.OptionsSource(&ComboBoxElems)
+		.OnGenerateWidget(this, &SAdvancedDeleteTab::OnGeneratedComboContent)
+		.OnSelectionChanged(this, &SAdvancedDeleteTab::OnComboBoxSelectionChanged)
+		[
+			SAssignNew(ComboDisplayTextBlock, STextBlock)
+			.Text(FText::FromString(TEXT("List Assets Option")))
+		];
+	return ComboBox;
+}
+
+TSharedRef<SWidget> SAdvancedDeleteTab::OnGeneratedComboContent(TSharedPtr<FString> SourceItem)
+{
+	TSharedRef<STextBlock> ComboBoxText = SNew(STextBlock)
+		.Text(FText::FromString(*SourceItem.Get()));
+	return ComboBoxText;
+}
+
+void SAdvancedDeleteTab::OnComboBoxSelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo)
+{
+	ComboDisplayTextBlock->SetText(FText::FromString(*NewSelection.Get()));
+	CheckedAssets.Empty();
+	CheckBoxes.Empty();
+	ComboDisplayTextBlock->SetText(FText::FromString(*NewSelection.Get()));
+	if (*NewSelection.Get() == "ListAllAssets")
+	{
+		DisplayAssetData = GetMainModule().GetAllAssetsDataUnderSelectedFolder();
+	}
+	else if (*NewSelection.Get() == "ListUnusedAssets")
+	{
+		DisplayAssetData = GetMainModule().ListAllUnusedAssets(DisplayAssetData);
+	}
+	RefreshListView();
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

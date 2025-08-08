@@ -273,6 +273,24 @@ void FMyEditorExtendModule::OpenPathInContentBrowser(const FString& AssetPath)
 	UEditorAssetLibrary::SyncBrowserToObjects(TArray<FString>{AssetPath});
 }
 
+TSet<TSharedPtr<FAssetData>> FMyEditorExtendModule::ListAllUnusedAssets(
+	const TSet<TSharedPtr<FAssetData>>& SelectedAssets) const
+{
+	if (SelectedAssets.IsEmpty())
+	{
+		return TSet<TSharedPtr<FAssetData>>();
+	}
+	TSet<TSharedPtr<FAssetData>> Res;
+	for (const TSharedPtr<FAssetData>& SelectedAsset : SelectedAssets)
+	{
+		if (UEditorAssetLibrary::FindPackageReferencersForAsset(SelectedAsset->GetObjectPathString()).IsEmpty())
+		{
+			Res.Emplace(SelectedAsset);
+		}
+	}
+	return Res;
+}
+
 #pragma endregion OpenWindowAction
 #undef LOCTEXT_NAMESPACE
 

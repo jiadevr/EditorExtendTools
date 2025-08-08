@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
+class FMyEditorExtendModule;
 /**
  * 
  */
@@ -22,6 +23,7 @@ public:
 	void Construct(const FArguments& InArgs);
 
 private:
+	FMyEditorExtendModule& GetMainModule()const;
 	//字体类设置
 	FSlateFontInfo HeadingFont;
 	FSlateFontInfo NormalFont;
@@ -53,4 +55,10 @@ private:
 	FReply OnSelectAllButtonClicked();
 	FReply OnDeselectAllButtonClicked();
 	FReply OnDeleteAllButtonClicked();
+	//下拉框
+	TSharedRef<SComboBox<TSharedPtr<FString>>> ConstructComboBox();
+	TArray<TSharedPtr<FString>> ComboBoxElems;
+	TSharedRef<SWidget> OnGeneratedComboContent(TSharedPtr<FString> SourceItem);
+	void OnComboBoxSelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo);
+	TSharedPtr<STextBlock> ComboDisplayTextBlock;
 };

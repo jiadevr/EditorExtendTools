@@ -14,7 +14,6 @@ void SClickableBorder::Construct(const FArguments& InArgs)
 	SBorder::Construct(
 		SBorder::FArguments()
 		.BorderBackgroundColor(FLinearColor(0.25f,0.25f,0.25f,0.25f))
-		.Padding(2.0f)
 		.OnMouseDoubleClick(this, &SClickableBorder::OnMouseButtonDoubleClick)
 		[
 			//把传入的Child挂载到SBorder

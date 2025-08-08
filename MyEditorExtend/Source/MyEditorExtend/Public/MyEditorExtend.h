@@ -25,11 +25,15 @@ private:
 	//打开一个Slate窗口进行操作
 	void OnOpenTabButtonClicked();
 	TSharedRef<SDockTab> OnSpawnAdvancedDeleteTab(const FSpawnTabArgs& Args);
-	TSet<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
+	
 public:
+	//获取当前路径下所有资产
+	TSet<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
 	//Slate窗口中的删除控制
 	bool DeleteGivenAssets(const TArray<TSharedPtr<FAssetData>>& TargetAssets);
 	//Slate窗口中定位到给定资产
 	void OpenPathInContentBrowser(const FString& AssetPath);
+	//Slate窗口中寻找未使用资产
+	TSet<TSharedPtr<FAssetData>> ListAllUnusedAssets(const TSet<TSharedPtr<FAssetData>>& SelectedAssets) const;
 #pragma endregion  ContentBrowserExtend
 };
