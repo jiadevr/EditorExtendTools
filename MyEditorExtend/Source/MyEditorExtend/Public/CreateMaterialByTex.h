@@ -17,6 +17,7 @@ enum class ETextureType:uint8
 	PackedChannel_ORM,
 	Normal,
 	Mask,
+	Displacement,
 	MAX
 };
 /*enum class EChannelPackingType:uint8
@@ -58,7 +59,8 @@ public:
 		TEXT("_BaseColor"),
 		TEXT("_Albedo"),
 		TEXT("_Diffuse"),
-		TEXT("_diff")
+		TEXT("_diff"),
+		TEXT("_Color")
 	};
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureSuffix")
@@ -95,6 +97,15 @@ public:
 		TEXT("_ARM"),
 		TEXT("_arm")
 	};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureSuffix")
+	TArray<FString> DisplacementArray = {
+		TEXT("_Disp"),
+		TEXT("_disp"),
+		TEXT("_Displacement"),
+		TEXT("_displacement")
+	};
+	
 #pragma endregion TextureSuffix
 	/**
 	 * 移除后缀的分辨率后缀
@@ -138,6 +149,7 @@ private:
 	bool TryConnectTexToNormal(UMaterial* TargetMaterial, UTexture2D* SelectedTexture,UMaterialExpressionTextureSample* TextureSample);
 	bool TryConnectTexToAO(UMaterial* TargetMaterial, UTexture2D* SelectedTexture,UMaterialExpressionTextureSample* TextureSample);
 	bool TryConnectORM(UMaterial*  TargetMaterial, UTexture2D* SelectedTexture,UMaterialExpressionTextureSample* TextureSample);
+	bool TryConnectTexToDisplacement(UMaterial* TargetMaterial, UTexture2D* SelectedTexture,UMaterialExpressionTextureSample* TextureSample);
 	//创建材质实例
 	void CreateMaterialInstanceFromMaterial(UMaterial* TargetMaterial, const FString& FolderPath);
 };

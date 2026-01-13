@@ -37,6 +37,22 @@ void UCreateMaterialByTex::CreateMaterialFromSelectedTex()
 	{
 		return;
 	}
+	if (!bUseCustomName)
+	{
+		int32 LastUnderScoreIndex = INDEX_NONE;
+		MaterialName.FindLastChar(TEXT('_'), LastUnderScoreIndex);
+		if (LastUnderScoreIndex != INDEX_NONE)
+		{
+			FString MaterialSuffix = MaterialName.RightChop(LastUnderScoreIndex);
+			if (BaseColorArray.Contains(MaterialSuffix) || MetallicArray.Contains(MaterialSuffix) || RoughnessArray.
+				Contains(MaterialSuffix) || NormalArray.Contains(MaterialSuffix) || AmbientOcclusionArray.
+				Contains(MaterialSuffix) || ORMArray.Contains(MaterialSuffix) || DisplacementArray.Contains(
+					MaterialSuffix))
+			{
+				MaterialName=MaterialName.Left(LastUnderScoreIndex);
+			}
+		}
+	}
 	UMaterial* NewMaterial = CreateMaterial(MaterialName, OutTexturePath);
 	if (!NewMaterial)
 	{
@@ -166,6 +182,14 @@ void UCreateMaterialByTex::AddTextureNodeToMaterial(UMaterial* TargetMaterial, U
 	if (!TargetMaterial->HasNormalConnected())
 	{
 		if (TryConnectTexToNormal(TargetMaterial, SelectedTexture, TextureSample))
+		{
+			PinCount++;
+			return;
+		}
+	}
+	if (!TargetMaterial->HasDisplacementConnected())
+	{
+		if (TryConnectTexToDisplacement(TargetMaterial, SelectedTexture, TextureSample))
 		{
 			PinCount++;
 			return;
@@ -303,7 +327,7 @@ bool UCreateMaterialByTex::TryConnectTexToAO(UMaterial* TargetMaterial, UTexture
 			TextureSample->SamplerType = SAMPLERTYPE_LinearColor;
 			//创建表达节点
 			SetNodeParamInMaterial(TargetMaterial, SelectedTexture, TextureSample,
-			                       ETextureType::SingleChannel_Roughness, 400, 920);
+			                       ETextureType::SingleChannel_AO, 400, 920);
 			return true;
 		}
 	}
@@ -324,6 +348,26 @@ bool UCreateMaterialByTex::TryConnectORM(UMaterial* TargetMaterial, UTexture2D* 
 			//创建表达节点
 			SetNodeParamInMaterial(TargetMaterial, SelectedTexture, TextureSample,
 			                       ETextureType::PackedChannel_ORM, -400, -920);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool UCreateMaterialByTex::TryConnectTexToDisplacement(UMaterial* TargetMaterial, UTexture2D* SelectedTexture,
+                                                       UMaterialExpressionTextureSample* TextureSample)
+{
+	for (const auto& DisplacementSuffix : DisplacementArray)
+	{
+		if (SelectedTexture->GetName().Contains(DisplacementSuffix))
+		{
+			SetSelectedTextureAssetSettings(SelectedTexture, ETextureType::Displacement);
+			//设置采样模式
+			TextureSample->Texture = SelectedTexture;
+			TextureSample->SamplerType = SAMPLERTYPE_LinearColor;
+			//创建表达节点
+			SetNodeParamInMaterial(TargetMaterial, SelectedTexture, TextureSample,
+			                       ETextureType::Displacement, -400, -920);
 			return true;
 		}
 	}
@@ -376,6 +420,10 @@ void UCreateMaterialByTex::SetSelectedTextureAssetSettings(UTexture2D* SelectedT
 		SelectedTexture->CompressionSettings = TextureCompressionSettings::TC_Masks;
 		SelectedTexture->SRGB = false;
 		break;
+	case ETextureType::Displacement:
+		SelectedTexture->CompressionSettings = TextureCompressionSettings::TC_VectorDisplacementmap;
+		SelectedTexture->SRGB = false;
+		break;
 	}
 	SelectedTexture->PostEditChange();
 }
@@ -412,6 +460,17 @@ void UCreateMaterialByTex::SetNodeParamInMaterial(UMaterial* TargetMaterial, UTe
 		case ETextureType::Mask:
 			TargetEndPoint = EMaterialProperty::MP_OpacityMask;
 			ConnectChannelID = 0;
+			break;
+		case ETextureType::Displacement:
+			if (TargetMaterial->IsTessellationEnabled()==true)
+			{
+				TargetEndPoint = EMaterialProperty::MP_Displacement;
+			}
+			else
+			{
+				TargetEndPoint = EMaterialProperty::MP_PixelDepthOffset;
+			}
+		case ETextureType::MAX:
 			break;
 		}
 
